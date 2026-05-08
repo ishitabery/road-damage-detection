@@ -13,12 +13,8 @@ import tarfile
 from pathlib import Path
 import os
 
-# ---------------------------------------------------------
-# CHANGE THIS to the path of your TAR file in Google Drive
-# Example:
-# TAR_PATH = "/content/drive/MyDrive/RoadDamageDataset.tar"
-# ---------------------------------------------------------
-TAR_PATH = "/content/drive/MyDrive/road-damage-DatasetNinja.tar"   # <--- REPLACE THIS
+
+TAR_PATH = "/content/drive/MyDrive/road-damage-DatasetNinja.tar"   
 
 # Location to extract
 EXTRACT_TO = "/content/road_damage_dataset"
@@ -33,11 +29,9 @@ with tarfile.open(TAR_PATH) as tar:
 
 print("Extraction completed!")
 
-# Detect dataset root (sometimes tar contains a top-level folder)
 EXTRACT_TO = Path(EXTRACT_TO)
 subdirs = [d for d in EXTRACT_TO.glob("*") if d.is_dir()]
 
-# If there is one top-level directory only, set DATA_ROOT to it
 if len(subdirs) == 1:
     DATA_ROOT = subdirs[0]
 else:
@@ -45,8 +39,6 @@ else:
 
 print("DATA_ROOT detected as:", DATA_ROOT)
 
-# Detect the images folder
-# It may be inside DATA_ROOT/img OR DATA_ROOT/<subfolder>/img
 candidate_imgs = list(DATA_ROOT.rglob("img"))
 if len(candidate_imgs) > 0:
     IMG_DIR = candidate_imgs[0]
@@ -79,24 +71,16 @@ print("Image folder:", IMG_DIR)
 print("Annotations JSON:", COCO_ANN)
 print("Meta JSON:", META_FN)
 
-"""## Update META_FN Path and Load meta.json
-
-### Subtask:
-Modify the logic to correctly identify the `meta.json` file, assuming it's located directly under the `EXTRACT_TO` directory (the parent of `ds0`). Load this `meta.json` file to extract global category information, including names, IDs, and potentially colors, if present.
-
-"""
 
 import json
 from collections import Counter, defaultdict
 from pprint import pprint
 from pathlib import Path # Ensure Path is imported for path operations
 
-# Step 1: Check for 'meta.json' directly under EXTRACT_TO
 new_meta_fn_candidate = EXTRACT_TO / 'meta.json'
 if new_meta_fn_candidate.is_file():
     META_FN = new_meta_fn_candidate
 else:
-    # Step 2: Fallback to existing logic, searching within DATA_ROOT using possible_jsons
     META_FN = None  # Reset META_FN before searching possible_jsons
     for j in possible_jsons:
         if "meta" in j.name.lower():
@@ -105,11 +89,8 @@ else:
 
 print("META_FN (after updated detection logic):", META_FN)
 
-# Load COCO_ANN (this part remains as it was correctly identified)
 with open(COCO_ANN, 'r') as f:
     coco = json.load(f)
-
-# Step 3: Load meta.json if META_FN is found
 meta = None
 if META_FN:
     with open(META_FN, 'r') as f:
@@ -147,10 +128,6 @@ from collections import Counter, defaultdict
 from pprint import pprint
 from pathlib import Path
 
-# Assuming META_FN, DATA_ROOT, EXTRACT_TO, possible_jsons are already defined from previous cells
-
-# 1. Load meta.json (already done and verified in the previous step, using META_FN)
-# Re-load meta if not already loaded, though it should be from the previous run
 meta = None
 if META_FN and META_FN.is_file():
     with open(META_FN, 'r') as f:
@@ -164,8 +141,6 @@ meta_categories = meta.get('classes', []) if meta else []
 meta_catid2name = {c['id']: c['title'] for c in meta_categories}
 meta_catid2color = {c['id']: c['color'] for c in meta_categories}
 
-# 2. Iterate through all individual image annotation JSON files in DATA_ROOT/ann
-# First, identify the annotation directory
 ann_dir = DATA_ROOT / 'ann'
 if not ann_dir.is_dir():
     raise FileNotFoundError(f"❌ Annotation directory not found: {ann_dir}")
@@ -177,8 +152,6 @@ print(f"Found {len(all_annotation_files)} annotation files in {ann_dir}")
 combined_images = []
 combined_annotations = []
 
-# Maintain a set of image file names to avoid duplicates if multiple annotation files
-# refer to the same image (though typically 1 ann file = 1 image)
 processed_image_filenames = set()
 
 for ann_file_path in all_annotation_files:
@@ -190,7 +163,6 @@ for ann_file_path in all_annotation_files:
         image_filename = Path(ann_file_path.stem).stem # Remove .json and then original image extension
         image_id = str(hash(image_filename)) # Generate a unique ID for the image if not present
 
-        # COCO format expects 'file_name', 'height', 'width', 'id'
         # For now, we only have file_name and can derive id. Height/width will be read on the fly.
         if image_filename not in processed_image_filenames:
             combined_images.append({
