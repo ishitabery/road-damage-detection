@@ -1,0 +1,13 @@
+path: yolov8_data
+
+train: train/images
+val: val/images
+test: test/images
+
+nc: 4
+
+names:
+  - pothole
+  - crack
+  - patch
+  - surface_damage
