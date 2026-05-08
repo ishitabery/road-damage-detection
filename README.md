@@ -65,8 +65,4 @@ The project also visualizes predictions with bounding boxes, class labels, and c
 - Improved low-light detection
 - Segmentation-based analysis
 
----
 
-## 📜 License
-
-MIT License
